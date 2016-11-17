@@ -29,10 +29,9 @@ Take absolute value of the diifference and check if less than epsilon
         for each motor
             selected_motor_speed += speed_change
 
-causes robot to change direction. #
-some wheels will have an equivalent negative value #
-wheels with positive values speed up, #
-wheels with negative values slow down #
+Causes robot to change direction.
+Some wheels will have an equivalent negative value.
+Wheels with positive values speed up, wheels with negative values slow down 
 
 
 ####Veer Away From Wall
