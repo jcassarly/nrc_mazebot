@@ -4,7 +4,7 @@ Source code for the Case Western 2016 NRC Mazebot
 
 ##Pseudocode
 
-###Walls
+###Normal Walls
 
 ####Get Distance From Wall
 
@@ -25,9 +25,9 @@ Rotate robot if necessary
         sensor_value_1 = get_distance(right_sensor)
         sensor_value_2 = get_distance(left_sensor)
         difference = |sensor_value_1 - sensor_value_2|
-        if difference < epsilon
+        if difference > epsilon
             choose larger value and rotate towards it
-                rotate the robot until different is less than epsilon
+                rotate the robot until difference is less than epsilon
                     larger value decreases
                     smaller value increases
         else 
@@ -43,13 +43,23 @@ Rotate the robot by some speed change
 
 Causes robot to change direction.<br />
 Some wheels will have an equivalent negative value.<br />
-Wheels with positive values speed up, wheels with negative values slow down<br />
+Wheels with positive values speed up, wheels with negative values slow down
 
 
 ####Veer Away From Wall
 
+When a robot gets too close to a wall, robot rotates to move away from the wall. <br />
+This function takes higher precedence than getParallel
+
+###Angled Wall
+
+If there is a significant difference between differences in front and back, there’s an angled wall. <br />
+Dont use angled wall to keep parallel
+
 ###Ramps
-can only use side walls for keeping parallel
+
+Use opposite side sensors until ramp is detected<br />
+If gyroscope detects ramp, start using side walls to keep parallel
 
 if we are going down the ramp we should slow down<br />
-if we are going up the ramp, we should speed up<br />
+if we are going up the ramp, we should speed up
