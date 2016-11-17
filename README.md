@@ -26,14 +26,20 @@ Take absolute value of the diifference and check if less than epsilon
 ####Rotate
 
     rotate(speed_change)
+        for each motor
         adjust each motor by speed_change
             // causes robot to change direction
             // some wheels will have an equivalent negative value
                 // wheels with positive values speed up,
                 // wheels with negative values slow down
 
+causes robot to change direction. 
+\nsome wheels will have an equivalent negative value
+\nwheels with positive values speed up,
+\nwheels with negative values slow down
 
-####Keep Away From Wall
+
+####Veer Away From Wall
 
 ###Ramps
 can only use side walls for keeping parallel
