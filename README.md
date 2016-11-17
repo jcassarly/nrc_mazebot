@@ -30,6 +30,7 @@ Take absolute value of the diifference and check if less than epsilon
 can only use side walls for keeping parallel
 
 if we are going down the ramp we should slow down
+
 if we are going up the ramp, we should speed up
 
 ####getDistance()
