@@ -6,14 +6,24 @@ Source code for the Case Western 2016 NRC Mazebot
 
 ###Walls
 
+####Get Distance From Wall
+
+Get the value from an ultrasonic sensor that tells how far it is form a wall
+
+    get_distance(sensor)
+        //TODO
+
 ####Get Parallel to Wall
-// Define epsilon: threshold for 
 
-get distance from wall for each relevant sensor (sensors of specified side)
+get distance from wall for each relevant sensor (sensors of specified side) <br />
+Take absolute value of the difference and check if less than epsilon <br />
+Rotate robot if necessary
 
-Take absolute value of the diifference and check if less than epsilon
+    #define epsilon __
 
     get_parallel(side_of_robot)
+        sensor_value_1 = get_distance(right_sensor)
+        sensor_value_2 = get_distance(left_sensor)
         difference = |sensor_value_1 - sensor_value_2|
         if difference < epsilon
             choose larger value and rotate towards it
@@ -24,6 +34,8 @@ Take absolute value of the diifference and check if less than epsilon
             everythings good
 
 ####Rotate
+
+Rotate the robot by some speed change
 
     rotate(speed_change)
         for each motor
@@ -39,8 +51,5 @@ Wheels with positive values speed up, wheels with negative values slow down<br /
 ###Ramps
 can only use side walls for keeping parallel
 
-if we are going down the ramp we should slow down
-
-if we are going up the ramp, we should speed up
-
-####Get Distance
+if we are going down the ramp we should slow down<br />
+if we are going up the ramp, we should speed up<br />
