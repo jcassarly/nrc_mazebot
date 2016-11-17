@@ -14,7 +14,7 @@ Take absolute value of the diifference and check if less than epsilon
     difference = |sensor_value_1 - sensor_value_2|
     if difference < epsilon
         choose larger value and rotate towards it
-            large value decreases and smaller value decreases until deifference is less than epsilon
+            large value decreases and smaller value increases until deifference is less than epsilon
 
             to turn, you can adjust every motor by the same value by adding that value to its default move forward speed.
             by changing this speed, it will either speed up or slow down the motors and you will turn from the direction you were going.
@@ -26,5 +26,10 @@ Take absolute value of the diifference and check if less than epsilon
 
 ###Keep Away From Wall
 
+###Ramps
+can only use side walls for keeping parallel
+
+if we are going down the ramp we should slow down
+if we are going up the ramp, we should speed up
 
 ####getDistance()
