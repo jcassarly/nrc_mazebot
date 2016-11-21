@@ -63,3 +63,10 @@ If gyroscope detects ramp, start using side walls to keep parallel
 
 if we are going down the ramp we should slow down<br />
 if we are going up the ramp, we should speed up
+
+##Things from the design review to consider
+ultrasonic sensors are slow - anno has an idea on how to make it faster
+
+when looking to take turns, if there is one, take it (this might be what we already have idk)
+
+thought completely autonomous would be easier to code
