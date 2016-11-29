@@ -4,14 +4,70 @@ Source code for the Case Western 2016 NRC Mazebot
 
 ##Pseudocode
 
+###Main Function
+    
+    Check Distances
+    while (not at the end of the maze)
+        determine direction and go
+        while (not at a turn)
+            check distance
+            veer away from wall
+            get parallel
+
+###Wheels
+
+####Define Wheels
+   a2___3b
+   1/ * \4
+   .|   |
+  d8\___/5c
+   7     6
+
+*arduino is here
+
+
+####Set Wheel Speeds
+
+Set all the wheels to some speed<br />
+2 are negative that value
+
+    void move_direction(direction, speed)
+        if direction == forward
+            wheel_a = speed
+            wheel_b = speed
+            wheel_c = -speed
+            wheel_d = -speed
+        else if direction == right
+            wheel_a = -speed
+            wheel_b = speed
+            wheel_c = speed
+            wheel_d = -speed
+        else if direction == left
+            wheel_a = speed
+            wheel_b = -speed
+            wheel_c = -speed
+            wheel_d = speed
+        else if direction == backward
+            wheel_a = -speed
+            wheel_b = -speed
+            wheel_c = speed
+            wheel_d = speed
+
 ###Normal Walls
 
 ####Get Distance From Wall
 
 Get the value from an ultrasonic sensor that tells how far it is form a wall
 
-    get_distance(sensor)
-        //TODO
+    double[] sensor_values = 8 double
+    
+    void get_distance()
+        for each sensor_value (done in 2 groups of 4)
+            get the reading from it
+            set the corresponding value in the sensor_values array to that value (first round do evens, then do odds to show that sensor values alternate)
+        check for angled wall?
+        check for ramp?
+
 
 ####Get Parallel to Wall
 
@@ -30,6 +86,8 @@ Rotate robot if necessary
                 rotate the robot until difference is less than epsilon
                     larger value decreases
                     smaller value increases
+
+            when robot is done rotating, undo the speed change
         else 
             everythings good
 
