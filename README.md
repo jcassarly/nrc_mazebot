@@ -17,11 +17,11 @@ Source code for the Case Western 2016 NRC Mazebot
 ###Wheels
 
 ####Define Wheels
-   a2___3b
-   1/ * \4
-   .|   |
-  d8\___/5c
-   7     6
+   a2___3b <br />
+   1/ * \4 <br />
+   .|   | <br />
+  d8\___/5c <br />
+   7     6 <br />
 
 *arduino is here
 
