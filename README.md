@@ -8,6 +8,7 @@ Source code for the Case Western 2016 NRC Mazebot
     
     Check Distances
     while (not at the end of the maze)
+        check distance
         determine direction and go
         while (not at a turn)
             check distance
