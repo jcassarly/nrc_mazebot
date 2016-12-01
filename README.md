@@ -16,6 +16,14 @@ Assigned to Jared
             veer away from wall
             get parallel
 
+###End of Maze
+
+####Determine if robot is at the end of the maze
+
+Assigned to Jared
+
+    boolean is_finished()
+
 ###Direction
 
 ####Determine the Direction
