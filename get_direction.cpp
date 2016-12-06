@@ -1,3 +1,5 @@
+#include "global_variables.h"
+
 void get_direction(int prev_dir){
   int back;
   int current;
