@@ -22,13 +22,15 @@ Assigned to Jared
 
 Assigned to Jared
 
-    boolean is_finished()
+    boolean is_finished(int previous_dir)
 
 ###Direction
 
 ####Determine the Direction
 
 Assigned to Megan
+
+    void get_direction(int previous_dir) // knows not to check that direction
 
 Decide based on sensor value where to send the robot<br />
 Set a global variable that indicates the direction the robot should be moving
@@ -39,11 +41,11 @@ Set a global variable that indicates the direction the robot should be moving
 
 Assigned to ?
 
-       a2___3b 
-       1/ * \4 
-       .|   | 
-      d8\___/5c 
-       7     6 
+       a0___1b 
+       7/ * \2 
+        |   | 
+      d6\___/3c 
+       5     4 
 
 *arduino is here
 
@@ -87,7 +89,7 @@ Get the value from an ultrasonic sensor that tells how far it is form a wall
 
     double[] sensor_values = 8 double
     
-    void get_distance()
+    void get_distance() // the direction the robot is currently moving (stored in a global variable)
         for each sensor_value (done in 2 groups of 4)
             get the reading from it
             set the corresponding value in the sensor_values array to that value (first round do evens, then do odds to show that sensor values alternate)
@@ -137,6 +139,8 @@ Wheels with positive values speed up, wheels with negative values slow down
 ####Veer Away From Wall
 
 Assigned to Jonathan
+
+    void veer_away_from_wall(int direction) // the direction of the wall that the robot needs to veer away from
 
 When a robot gets too close to a wall, robot rotates to move away from the wall. <br />
 This function takes higher precedence than getParallel
