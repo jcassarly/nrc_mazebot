@@ -1,7 +1,7 @@
 #include "global_variables.h"
 
 // the current direction the robot is moving (values 1-4 - see .h file for declarations)
-int direction = RIGHT;
+int direction = RIGHT; // this should be set in the direction facing the wall on the opposite side that we are going
 
 // distances the sensors pick up in centimeters
 double sensor_values[8] = {0}; 
