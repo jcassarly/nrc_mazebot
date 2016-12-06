@@ -39,11 +39,11 @@ Set a global variable that indicates the direction the robot should be moving
 
 Assigned to ?
 
-       a2___3b 
-       1/ * \4 
-       .|   | 
-      d8\___/5c 
-       7     6 
+       a0___1b 
+       7/ * \2 
+        |   | 
+      d6\___/3c 
+       5     4 
 
 *arduino is here
 
