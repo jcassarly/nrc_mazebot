@@ -12,7 +12,7 @@ loop() {
         // set the current direction
         get_direction(direction);
         // move in that direction
-        move_direction(direction, default_speed);
+        move_direction(direction, default_speed, 0);
 
         while (get_lesser_distance(direction) > turn_epsilon) {
             // if the lesser distance from one wall to the side is too close to the wall
@@ -32,7 +32,7 @@ loop() {
     }
 
     // set wheel speeds to 0
-    move_direction(direction, 0);
+    move_direction(direction, 0, 0);
 }
 
 // gets the lesser distance from the wall in a given direction

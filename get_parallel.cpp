@@ -14,11 +14,11 @@ void get_parallel(int side) {
     if (diff > parallel_epsilon && diff < angled_epsilon && !getting_parallel) {
         // if the first sensor is larger, rotate to make the sensor1 smaller
         if (sensor1 > sensor2) {
-            rotate(speed_change);
+            move_direction(side, default_speed, speed_change);
         }
         // if the second sensor is larger, rotate to make sensor2 smaller
         else {
-            rotate(-speed_change);
+            move_direction(side, default_speed, speed_change);
         }
         getting_parallel = true;
     }
@@ -29,7 +29,7 @@ void get_parallel(int side) {
     }
     else {
         // stop rotating
-        move_direction(side, default_speed);
+        move_direction(side, default_speed, 0);
         getting_parallel = false;
     }
 }
