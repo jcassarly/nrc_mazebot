@@ -5,7 +5,7 @@ int wheel2 = 2;
 int wheel3 = 3;
 int wheel4 = 4;
 
-void setSpeed(int direction, int speed, int adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
+void move_in_direction(int direction, int speed, int adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
 {
   //assuming pins are 1,2,3,4.  these will be changed later.  AnalogWrite takes (pin number, speed (0 - 255))
   
