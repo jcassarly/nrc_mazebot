@@ -16,7 +16,7 @@ int veer_away_from_wall(int direction)
     if(too_close_distance > (sensor_values[i * 2] + sensor_values[i * 2 + 1]))
       veer_direction = i;
   }
-  
+  //if no value is smaller than the treshhold, returns negative 1 as the value, to be taken by the method move_direction
   if(veer_direction == null)
     veer_direction = -1;
     
