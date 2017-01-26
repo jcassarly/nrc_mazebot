@@ -15,5 +15,8 @@ int wheel_d = 0;
 // tells whether the robot is currently trying to get parallel to the wall
 bool getting_parallel = false;
 
+// tells if the robot is cureently driving on a ramp
+bool on_ramp = false;
+
 // the default speed the robot should be moving
 int default_speed = 0;

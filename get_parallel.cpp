@@ -5,31 +5,44 @@ double parallel_epsilon = 0; // value that is the difference between the sensor 
 double angled_epsilon = 0; // value that if the difference between the sensor values is greater than this, an angled wall is here
 double speed_change = 0;
 
-void get_parallel(int side) {
+double get_parallel(int side) {
     double sensor1 = sensor_values[side];
     double sensor2 = sensor_values[side + 1];
-    diff = abs(sensor2 - sensor1);
+    double diff = abs(sensor2 - sensor1);
+
+    // if the robot is on a ramp, look at a wall to the side
+    if (on_ramp) {
+        sensor1 = sensor_values[(8 - side + 2) % 8];
+        sensor2 = sensor_values[(8 - side + 2) % 8];
+        diff = abs(sensor2 - sensor1);
+    }
+    // if the wall in the current direction is angled, switch to the wall behind
+    else if (diff > angled_epsilon) {
+        sensor1 = sensor_values[(8 - side + 4) % 8];
+        sensor2 = sensor_values[(8 - side + 4) % 8];
+        diff = abs(sensor2 - sensor1);
+    }
 
     // if the difference between the sensor values is too large and the robot is not getting parallel
-    if (diff > parallel_epsilon && diff < angled_epsilon && !getting_parallel) {
+    if (diff > parallel_epsilon && !getting_parallel) {
         // if the first sensor is larger, rotate to make the sensor1 smaller
         if (sensor1 > sensor2) {
-            move_direction(side, default_speed, speed_change);
+            return -speed_change;
         }
         // if the second sensor is larger, rotate to make sensor2 smaller
         else {
-            move_direction(side, default_speed, speed_change);
+            return speed_change;
         }
         getting_parallel = true;
     }
     // if the difference between the sensor values is too large and the robot is getting parallel
-    else if (diff > parallel_epsilon && diff < angled_epsilon && getting_parallel) {
+    else if (diff > parallel_epsilon && getting_parallel) {
         // keep doing what its doing
         getting_parallel = true;
     }
     else {
         // stop rotating
-        move_direction(side, default_speed, 0);
+        return 0;
         getting_parallel = false;
     }
 }
