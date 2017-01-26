@@ -16,7 +16,7 @@ void get_direction(int prev_dir){
   get_distance();
   
   for (int i=0; i<8; i+=2){
-    if (i!=back && i!=(back+1)){  //doesn't check direction we just came from
+    if (i!=back){  //doesn't check direction we just came from
       current=(int)(sensor_values[i]+sensor_values[i+1])/2; //sets current to the average of the two sensors pointing the same direction
       if (current > max_val){ //if the current distance is greater than the max distance, max_val becomes current and max_dir becomes the current direction being checked
         max_val=current;
