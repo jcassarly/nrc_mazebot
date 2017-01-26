@@ -6,4 +6,6 @@
 #define UP 0
 #define DOWN 4
 
+#define DONE 8
+
 #endif
