@@ -23,7 +23,7 @@ loop() {
             // if the distance from one wall to the other side is too close to the wall
             else if (get_lesser_distance((8 - direction - 2) % 8) < veer_epsilon) {
                 // veer away from said wall
-                veer_away_from_wall((8 - direction - 2) % 8)
+                veer_away_from_wall((8 - direction - 2) % 8);
             }
 
             // figure out how to handle angled wall tho, this line wont be enough
