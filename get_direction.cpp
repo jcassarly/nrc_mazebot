@@ -28,5 +28,5 @@ void get_direction(int prev_dir){
   if (max_val!=E)
     direction=max_dir;  //sets global variable to be the direction farthest away from a wall (the direction we need to move next)
   else
-    direction=8;  //sets direction to indicate the end of the maze has been reached
+    direction=DONE;  //sets direction to indicate the end of the maze has been reached
 }
