@@ -1,5 +1,5 @@
-#include global_variables.h
-#include get_direction.h
+#include "global_variables.h"
+#include "get_direction.h"
 #define E 10 //tbd epsilon value
 
 void get_direction(int prev_dir){
