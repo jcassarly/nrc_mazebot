@@ -1,4 +1,5 @@
 #include "global_variables.h"
+#include "get_parallel.h"
 #include <math.h>
 
 double parallel_epsilon = 0; // value that is the difference between the sensor values is greater than this, the robot is not parallel
