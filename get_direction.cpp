@@ -1,4 +1,5 @@
 #include "global_variables.h"
+#include "get_direction.h"
 
 void get_direction(int prev_dir){
   int back;
@@ -26,3 +27,5 @@ void get_direction(int prev_dir){
   }
 
   direction=max_dir;  //sets global variable to be the direction farthest away from a wall (the direction we need to move next)
+
+}

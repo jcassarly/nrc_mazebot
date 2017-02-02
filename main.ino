@@ -1,4 +1,8 @@
 #include "global_variables.h"
+#include "get_direction.h"
+#include "move_direction.h"
+#include "get_parallel.h"
+#include "veer_away_from_wall.h"
 
 setep() {
 
