@@ -47,7 +47,7 @@ loop() {
         // set the current direction
         get_direction(direction);
         // move in that direction
-        move_direction(direction, default_speed, get_parallel(direction), veer_away_from_wall(direction));
+        move_direction(direction, default_speed, get_parallel(direction), veer_away_from_wall(direction),gx);
     }
 
     // stop robot
