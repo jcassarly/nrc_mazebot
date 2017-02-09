@@ -6,10 +6,15 @@ int wheel2 = 2;
 int wheel3 = 3;
 int wheel4 = 4;
 
-void move_in_direction(int direction, int speed, int adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
+void move_in_direction(int direction, int speed, int adjustment, int veer_direction, int16_t gyro_data) //adjustment is for getParallel, which would calculate how much adjustment is needed
 {
     //assuming pins are 1,2,3,4.  these will be changed later.  AnalogWrite takes (pin number, speed (0 - 255))
-
+    int gyro_modifier = 1;
+    
+    if(gyro_data > THRESHOLD)
+        gyro_modifer = 2;
+    
+    
     if(veer_direction != -1)
     {
         if(veer_direction == 0)
@@ -47,34 +52,34 @@ void move_in_direction(int direction, int speed, int adjustment, int veer_direct
 
     else if(direction == 0) //"forward"
     {
-        analogWrite(wheel1, speed + adjustment);
-        analogWrite(wheel2, speed + adjustment);
-        analogWrite(wheel3, -speed + adjustment);
-        analogWrite(wheel4, -speed + adjustment);
+        analogWrite(wheel1, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel2, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel3, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel4, (-speed + adjustment)/gyro_modifier);
     }
 
     else if(direction == 2) //"right"
     {
-        analogWrite(wheel1, -speed + adjustment);
-        analogWrite(wheel2, speed + adjustment);
-        analogWrite(wheel3, speed + adjustment);
-        analogWrite(wheel4, -speed + adjustment);
+        analogWrite(wheel1, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel2, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel3, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel4, (-speed + adjustment)/gyro_modifier);
     }
 
     else if(direction == 4) //left
     {
-        analogWrite(wheel1, speed + adjustment);
-        analogWrite(wheel2, -speed + adjustment);
-        analogWrite(wheel3, -speed + adjustment);
-        analogWrite(wheel4, speed + adjustment); 
+        analogWrite(wheel1, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel2, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel3, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel4, (speed + adjustment)/gyro_modifier); 
     }
 
     else if(direction == 6) //backwards
     {
-        analogWrite(wheel1, -speed + adjustment);
-        analogWrite(wheel2, -speed + adjustment);
-        analogWrite(wheel3, speed + adjustment);
-        analogWrite(wheel4, speed + adjustment); 
+        analogWrite(wheel1, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel2, (-speed + adjustment)/gyro_modifier);
+        analogWrite(wheel3, (speed + adjustment)/gyro_modifier);
+        analogWrite(wheel4, (speed + adjustment)/gyro_modifier); 
     }
                
 }
