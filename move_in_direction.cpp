@@ -6,6 +6,8 @@ int wheel2 = 2;
 int wheel3 = 3;
 int wheel4 = 4;
 
+final int THRESHOLD = 7; //modify this later to whatever the gyroscope gives.
+
 void move_in_direction(int direction, int speed, int adjustment, int veer_direction, int16_t gyro_data) //adjustment is for getParallel, which would calculate how much adjustment is needed
 {
     //assuming pins are 1,2,3,4.  these will be changed later.  AnalogWrite takes (pin number, speed (0 - 255))
