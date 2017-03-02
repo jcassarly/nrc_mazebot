@@ -226,7 +226,12 @@ void get_direction(int prev_dir){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-float get_parallel(int side) {
+/**
+ * Returns a speed change that is used by move_in_direction to rotate the robot so that it gets parallel to the wall
+ * @param side the wall the robot is looking at and needs to get parallel to
+ * @return the change in speed to make the robot get parallel to the wall.  Return 0 if the robot is parallel.
+ */
+int8_t get_parallel(int side) {
     float sensor1 = sensor_values[side];
     float sensor2 = sensor_values[side + 1];
     float diff = fabs(sensor2 - sensor1);
@@ -276,7 +281,7 @@ float get_parallel(int side) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
+void move_in_direction(int direction, uint8_t speed, int8_t adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
 {
     //assuming pins are 1,2,3,4.  these will be changed later.  AnalogWrite takes (pin number, speed (0 - 255))
 
@@ -314,7 +319,7 @@ void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int vee
             rearR ->run(BACKWARD);
         }   
 
-        set_all_wheel_speeds(speed + adjustment);
+        set_all_wheel_speeds((int8_t)(speed + adjustment));
     }
 
     else if(direction == 0) //"forward"
@@ -324,7 +329,7 @@ void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int vee
         rearL ->run(BACKWARD);
         rearR ->run(FORWARD);
 
-        set_all_wheel_speeds(speed + adjustment);
+        set_all_wheel_speeds((int8_t)(speed + adjustment));
     }
 
     else if(direction == 2) //"right"
@@ -334,7 +339,7 @@ void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int vee
         rearL ->run(FORWARD);
         rearR ->run(FORWARD);
 
-        set_all_wheel_speeds(speed + adjustment);
+        set_all_wheel_speeds((int8_t)(speed + adjustment));
     }
 
     else if(direction == 4) //left
@@ -344,7 +349,7 @@ void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int vee
         rearL ->run(BACKWARD);
         rearR ->run(BACKWARD);
 
-        set_all_wheel_speeds(speed + adjustment);
+        set_all_wheel_speeds((int8_t)(speed + adjustment));
     }
 
     else if(direction == 6) //backwards
@@ -354,7 +359,7 @@ void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int vee
         rearL ->run(FORWARD);
         rearR ->run(BACKWARD);
 
-        set_all_wheel_speeds(speed + adjustment);
+        set_all_wheel_speeds((int8_t)(speed + adjustment));
     }
                
 }
@@ -399,7 +404,7 @@ int veer_away_from_wall(int direction)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/*READ ACCEL*/
+/*READ ACCELEROMETER*/
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
