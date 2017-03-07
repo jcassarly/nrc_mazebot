@@ -3,13 +3,13 @@
 #include <Wire.h>
 #include "I2Cdev.h"
 #include "MPU6050.h"
-#include "Adafruit_MotorShield.h"
-#include "utility/Adafruit_MS_PWMServoDriver.h"
+#include <Adafruit_MotorShield.h>
+#include <utility/Adafruit_MS_PWMServoDriver.h>
 
 //method declarations
 void get_distance();
 void get_direction(int prev_dir);
-float get_parallel(int side);
+int8_t get_parallel(int side);
 void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int veer_direction);
 int veer_away_from_wall(int direction);
 float read_accelerometer();
@@ -36,7 +36,7 @@ void set_all_wheel_speeds(uint8_t speed);
 #define PARALLEL_EPSILON 0.08 // value that is the difference between the sensor values is greater than this, the robot is not parallel
 #define ANGLED_EPSILON 19.44 // value that if the difference between the sensor values is greater than this, an angled wall is here
 
-#define DEFAULT_SPEED 150
+#define DEFAULT_SPEED 100
 #define SPEED_CHANGE 30
 
 #define WALL_EPSILON 10.25 // 4 inches
@@ -48,12 +48,12 @@ int direction = RIGHT; // this should be set in the direction facing the wall on
 float sensor_values[8] = {0}; 
 
 // create motor shield
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+Adafruit_MotorShield AFMS; 
 // wheel speeds correspodning to letter of variable (see README for which letter is which)
-Adafruit_DCMotor *frontL = AFMS.getMotor(1);
-Adafruit_DCMotor *frontR = AFMS.getMotor(4);
-Adafruit_DCMotor *rearL  = AFMS.getMotor(2);
-Adafruit_DCMotor *rearR  = AFMS.getMotor(3);
+Adafruit_DCMotor *frontL;
+Adafruit_DCMotor *frontR;
+Adafruit_DCMotor *rearL;
+Adafruit_DCMotor *rearR;
 
 // tells whether the robot is currently trying to get parallel to the wall
 bool getting_parallel = false;
@@ -126,7 +126,7 @@ unsigned long lDeltaT;
  *  the sensors.
  */
 float analog_to_cm(int analog){
-  return (analog * 1.0);
+  return (.0581 * analog) - 13.309;
 }
 
 /**
@@ -141,14 +141,14 @@ bool get_distance(unsigned long t){
     //unsigned long mod = (t>=15 ? (t/15)%2 : 1);
 
     if(norA && groupBDone && t>=SAMPLING_INTERVAL) { 
-        sensorValue0 = analogRead(ULT_0);
-        sensorValue1 = analogRead(ULT_1);
-        sensorValue2 = analogRead(ULT_2);
-        sensorValue3 = analogRead(ULT_3);
-        (sensorValue0 > THRESH ? sensor_values[0] = analog_to_cm(sensorValue0) : sensor_values[0] = sensor_values[0]);          // if not above THESH, then sensor hasn't yet returned a result
-        (sensorValue1 > THRESH ? sensor_values[1] = analog_to_cm(sensorValue1) : sensor_values[1] = sensor_values[1]); 
-        (sensorValue2 > THRESH ? sensor_values[2] = analog_to_cm(sensorValue2) : sensor_values[2] = sensor_values[2]);
-        (sensorValue3 > THRESH ? sensor_values[3] = analog_to_cm(sensorValue3) : sensor_values[3] = sensor_values[3]);
+        sensorValue0 = analogRead(ULT_0);//2
+        sensorValue1 = analogRead(ULT_1);//4
+        sensorValue2 = analogRead(ULT_2);//6
+        sensorValue3 = analogRead(ULT_3);//0
+        (sensorValue0 > THRESH ? sensor_values[2] = analog_to_cm(sensorValue0) : sensor_values[2] = sensor_values[2]);          // if not above THESH, then sensor hasn't yet returned a result
+        (sensorValue1 > THRESH ? sensor_values[4] = analog_to_cm(sensorValue1) : sensor_values[4] = sensor_values[4]); 
+        (sensorValue2 > THRESH ? sensor_values[6] = analog_to_cm(sensorValue2) : sensor_values[6] = sensor_values[6]);
+        (sensorValue3 > THRESH ? sensor_values[0] = analog_to_cm(sensorValue3) : sensor_values[0] = sensor_values[0]);
 
         RESET_A
         TRIG_A
@@ -159,14 +159,14 @@ bool get_distance(unsigned long t){
 
     }
     else if(norB && groupADone && t>=SAMPLING_INTERVAL) {
-        sensorValue4 = analogRead(ULT_4);
-        sensorValue5 = analogRead(ULT_5);
-        sensorValue6 = analogRead(ULT_6);
-        sensorValue7 = analogRead(ULT_7);
-        (sensorValue4 > THRESH ? sensor_values[4] = analog_to_cm(sensorValue4) : sensor_values[4] = sensor_values[4]);          // if not above THESH, then sensor hasn't yet returned a result
+        sensorValue4 = analogRead(ULT_4);//7
+        sensorValue5 = analogRead(ULT_5);//5
+        sensorValue6 = analogRead(ULT_6);//3
+        sensorValue7 = analogRead(ULT_7);//1
+        (sensorValue4 > THRESH ? sensor_values[7] = analog_to_cm(sensorValue4) : sensor_values[7] = sensor_values[7]);          // if not above THESH, then sensor hasn't yet returned a result
         (sensorValue5 > THRESH ? sensor_values[5] = analog_to_cm(sensorValue5) : sensor_values[5] = sensor_values[5]); 
-        (sensorValue6 > THRESH ? sensor_values[6] = analog_to_cm(sensorValue6) : sensor_values[6] = sensor_values[6]);
-        (sensorValue7 > THRESH ? sensor_values[7] = analog_to_cm(sensorValue7) : sensor_values[7] = sensor_values[7]);
+        (sensorValue6 > THRESH ? sensor_values[3] = analog_to_cm(sensorValue6) : sensor_values[3] = sensor_values[3]);
+        (sensorValue7 > THRESH ? sensor_values[1] = analog_to_cm(sensorValue7) : sensor_values[1] = sensor_values[1]);
 
         RESET_B
         TRIG_B
@@ -207,14 +207,16 @@ void get_direction(int prev_dir){
             if (current > max_val){ //if the current distance is greater than the max distance, max_val becomes current and max_dir becomes the current direction being checked
                 max_val=current;
                 max_dir=i;
+                Serial.println(current);
+                Serial.println(max_dir);
             }
         }
     }
 
     if (max_val > DONE_EPSILON)
         direction=max_dir; //sets global variable to be the direction farthest away from a wall (the direction we need to move next)
-    else
-        direction=DONE; //we have reached the end of the maze if the farthest wall is within epsilon from the robot (not including direction we just came from)
+    //else
+        //direction=DONE; //we have reached the end of the maze if the farthest wall is within epsilon from the robot (not including direction we just came from)
 
 }
 
@@ -287,84 +289,53 @@ void move_in_direction(int direction, uint8_t speed, int8_t adjustment, int veer
 
     if(veer_direction >= 0)
     {
-        if(veer_direction == 0) // forward
-        {
-            frontL->run(BACKWARD);
-            frontR->run(FORWARD);
-            rearL ->run(BACKWARD);
-            rearR ->run(FORWARD);
-        }
         
-        else if(veer_direction == 2) // right
-        {
-            frontL->run(BACKWARD);
-            frontR->run(BACKWARD);
-            rearL ->run(FORWARD);
-            rearR ->run(FORWARD);
-        }
-
-        else if(veer_direction == 4) // left
-        {
-            frontL->run(FORWARD);
-            frontR->run(FORWARD);
-            rearL ->run(BACKWARD);
-            rearR ->run(BACKWARD);
-        }
-
-        else if(veer_direction == 6) // backwards
-        {
-            frontL->run(FORWARD);
-            frontR->run(BACKWARD);
-            rearL ->run(FORWARD);
-            rearR ->run(BACKWARD);
-        }   
-
-        set_all_wheel_speeds((int8_t)(speed + adjustment));
+        set_speeds((int8_t)(speed + ((8 - direction + 2) % 8 == veer_direction) ? SPEED_CHANGE : -SPEED_CHANGE));
     }
 
-    else if(direction == 0) //"forward"
+    if(direction == UP) //"forward"
     {
         frontL->run(BACKWARD);
         frontR->run(FORWARD);
         rearL ->run(BACKWARD);
         rearR ->run(FORWARD);
 
-        set_all_wheel_speeds((int8_t)(speed + adjustment));
+        set_speeds((int8_t)(speed + adjustment));
     }
 
-    else if(direction == 2) //"right"
+    else if(direction == RIGHT) //"right"
     {
         frontL->run(BACKWARD);
         frontR->run(BACKWARD);
         rearL ->run(FORWARD);
         rearR ->run(FORWARD);
 
-        set_all_wheel_speeds((int8_t)(speed + adjustment));
+        set_speeds((int8_t)(speed + adjustment));
     }
 
-    else if(direction == 4) //left
+    else if(direction == LEFT) //left
     {
         frontL->run(FORWARD);
         frontR->run(FORWARD);
         rearL ->run(BACKWARD);
         rearR ->run(BACKWARD);
 
-        set_all_wheel_speeds((int8_t)(speed + adjustment));
+        set_speeds((int8_t)(speed + adjustment));
     }
 
-    else if(direction == 6) //backwards
+    else if(direction == DOWN) //backwards
     {
         frontL->run(FORWARD);
         frontR->run(BACKWARD);
         rearL ->run(FORWARD);
         rearR ->run(BACKWARD);
 
-        set_all_wheel_speeds((int8_t)(speed + adjustment));
+        set_speeds((int8_t)(speed + adjustment));
     }
                
 }
 
-void set_all_wheel_speeds(uint8_t speed) {
+void set_speeds(uint8_t speed) {
     frontL->setSpeed(speed);
     frontR->setSpeed(speed);
     rearL->setSpeed(speed);
@@ -383,7 +354,7 @@ void set_all_wheel_speeds(uint8_t speed) {
 
 //one thing to note is that I might want to include a global variable as to whether or not the robo will veer away from a wall
 
-int too_close_distance = 4; //set this variable later to whatever the ultrasonic sensors output, in centimeters
+int too_close_distance = 5; //set this variable later to whatever the ultrasonic sensors output, in centimeters
 
 int veer_away_from_wall(int direction)
 {
@@ -392,13 +363,13 @@ int veer_away_from_wall(int direction)
 
     int veer_direction = -1;
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 8; i+=2)
     {
-        if(too_close_distance > (sensor_values[i * 2] + sensor_values[i * 2 + 1]))
+        if(too_close_distance > (sensor_values[i] + sensor_values[i + 1])/2.0)
             veer_direction = i;
     }
 
-    return veer_direction * 2;
+    return veer_direction;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -433,7 +404,7 @@ void setup() {
     /* Set up Accelerometer */
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
-    Wire.begin(0x40); // accelerometer is 0x40 (register 107) or 0x68 (register 117)
+    Wire.begin(); // accelerometer is 0x40 (register 107) or 0x68 (register 117)
 
     // initialize serial communication
     // (38400 chosen because it works as well at 8MHz as it does at 16MHz, but
@@ -453,7 +424,7 @@ void setup() {
 
     /* set up ultrasonics */
 
-    Wire.begin(); // motorshield between 0x60-0x80
+    //Wire.begin(0x60); // motorshield between 0x60-0x80
 
     //Digital INPUTS
     pinMode(NOR_B_PIN, INPUT);
@@ -483,6 +454,12 @@ void setup() {
     RESET_B
 
     /* set up motors */
+    AFMS = Adafruit_MotorShield();
+
+    frontL = AFMS.getMotor(1);
+    frontR = AFMS.getMotor(4);
+    rearL  = AFMS.getMotor(2);
+    rearR  = AFMS.getMotor(3);
 
     AFMS.begin();  // create with the default frequency 1.6KHz
   
@@ -502,9 +479,18 @@ void setup() {
     rearL ->run(RELEASE);
     rearR ->run(RELEASE);
 
+    Serial.println("motor setup done");
+
     /* initialize some stuff */
 
+    lTime = millis();
+    lDeltaT = lTime - lTimeLast;
+    bool success = get_distance(lDeltaT);
+    if(success){
+        lTimeLast = lTime;
+    }
     get_direction(direction);
+    Serial.println(direction);
 }
 
 void loop() {
