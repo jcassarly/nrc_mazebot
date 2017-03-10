@@ -34,12 +34,13 @@ void set_all_wheel_speeds(uint8_t speed);
 
 #define RAMP_EPSILON 12
 #define PARALLEL_EPSILON 0.08 // value that is the difference between the sensor values is greater than this, the robot is not parallel
-#define ANGLED_EPSILON 19.44 // value that if the difference between the sensor values is greater than this, an angled wall is here
+#define ANGLED_EPSILON 18.08 //19.44 value might be too high // value that if the difference between the sensor values is greater than this, an angled wall is here
 
 #define DEFAULT_SPEED 150
 #define SPEED_CHANGE 30
 
 #define WALL_EPSILON 10.25 // 4 inches
+#define VEER_EPSILON 5
 
 // the current direction the robot is moving 
 int direction = FORWARDS; // this should be set in the direction facing the wall on the opposite side that we are going
@@ -306,7 +307,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("veering");
         }
         else {
             if (rotate_parallel > 0) {
@@ -330,7 +330,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("parallel");
         }
     }
 
@@ -363,7 +362,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("veering");
         }
         else {
             if (rotate_parallel > 0) {
@@ -387,7 +385,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("parallel");
         }
     }
 
@@ -420,7 +417,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("veering");
         }
         else {
             if (rotate_parallel > 0) {
@@ -444,7 +440,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("parallel");
         }
     }
 
@@ -477,7 +472,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("veering");
         }
         else {
             if (rotate_parallel > 0) {
@@ -501,7 +495,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearL ->setSpeed(speed);
                 rearR ->setSpeed(speed);
             }
-            Serial.println("parallel");
         }
     }
                
@@ -518,8 +511,6 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
 
 //one thing to note is that I might want to include a global variable as to whether or not the robo will veer away from a wall
 
-int too_close_distance = 5; //set this variable later to whatever the ultrasonic sensors output, in centimeters
-
 int veer_away_from_wall(int direction)
 {
     //averages distances on sides, and determines if one distance is less than the threshold value too_close_distance
@@ -530,7 +521,7 @@ int veer_away_from_wall(int direction)
     for(int i = 0; i < 8; i+=2)
     {
         float smaller_value = (sensor_values[i] < sensor_values[i + 1]) ? sensor_values[i] : sensor_values[i + 1];
-        if(smaller_value < too_close_distance)
+        if(smaller_value < VEER_EPSILON)
             veer_direction = i;
     }
 
@@ -686,10 +677,12 @@ void loop() {
         // if the robot is looking at an angled wall
         if (difference > ANGLED_EPSILON) {
             // get larger value between sensors in direction
-            float sensor = (sensor_values[direction] > sensor_values[direction+1]) ? sensor_values[direction] : sensor_values[direction + 1];
+            float sensor_large = (sensor_values[direction] > sensor_values[direction+1]) ? sensor_values[direction] : sensor_values[direction + 1];
+            float avg_dist_left = (sensor_values[(8 - direction - 2) % 8] + sensor_values[((8 - direction - 2) % 8) + 1]) / 2.0; 
 
-            // if the large value is less than 4" + the absolute value of the difference between the sensors
-            if (sensor < diff + WALL_EPSILON) {
+            // if the large value minus the distance the left side ofthe robot (relative to direction) is to the wall
+            // is less than 4" + the absolute value of the difference between the sensors
+            if (sensor_large - avg_dist_left < diff + WALL_EPSILON) {
                 // set the current direction
                 get_direction(direction);
             }
