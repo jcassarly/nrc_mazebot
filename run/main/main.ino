@@ -10,7 +10,7 @@
 void get_distance();
 void get_direction(int prev_dir);
 int8_t get_parallel(int side);
-void move_in_direction(int direction, uint8_t speed, uint8_t adjustment, int veer_direction);
+void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int veer_direction);
 int veer_away_from_wall(int direction);
 float read_accelerometer();
 float analog_to_cm(int analog);
@@ -27,8 +27,8 @@ void set_all_wheel_speeds(uint8_t speed);
 
 #define RIGHT 2
 #define LEFT 6
-#define UP 0
-#define DOWN 4
+#define FORWARDS 0
+#define BACKWARDS 4
 
 #define DONE 8
 
@@ -36,13 +36,13 @@ void set_all_wheel_speeds(uint8_t speed);
 #define PARALLEL_EPSILON 0.08 // value that is the difference between the sensor values is greater than this, the robot is not parallel
 #define ANGLED_EPSILON 19.44 // value that if the difference between the sensor values is greater than this, an angled wall is here
 
-#define DEFAULT_SPEED 100
+#define DEFAULT_SPEED 150
 #define SPEED_CHANGE 30
 
 #define WALL_EPSILON 10.25 // 4 inches
 
-// the current direction the robot is moving (values 1-4 - see .h file for declarations)
-int direction = RIGHT; // this should be set in the direction facing the wall on the opposite side that we are going
+// the current direction the robot is moving 
+int direction = FORWARDS; // this should be set in the direction facing the wall on the opposite side that we are going
 
 // distances the sensors pick up in centimeters
 float sensor_values[8] = {0}; 
@@ -54,9 +54,6 @@ Adafruit_DCMotor *frontL;
 Adafruit_DCMotor *frontR;
 Adafruit_DCMotor *rearL;
 Adafruit_DCMotor *rearR;
-
-// tells whether the robot is currently trying to get parallel to the wall
-bool getting_parallel = false;
 
 // 0 for not on a ramp, 1 for up, 2 for down
 int which_ramp = 0;
@@ -229,9 +226,9 @@ void get_direction(int prev_dir){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Returns a speed change that is used by move_in_direction to rotate the robot so that it gets parallel to the wall
+ * Returns a positive or negative value that is used by move_in_direction to rotate the robot so that it gets parallel to the wall
  * @param side the wall the robot is looking at and needs to get parallel to
- * @return the change in speed to make the robot get parallel to the wall.  Return 0 if the robot is parallel.
+ * @return the positive or negative value to make the robot get parallel to the wall.  Return 0 if the robot is parallel.
  */
 int8_t get_parallel(int side) {
     float sensor1 = sensor_values[side];
@@ -251,27 +248,22 @@ int8_t get_parallel(int side) {
         diff = fabs(sensor2 - sensor1);
     }
 
-    // if the difference between the sensor values is too large and the robot is not getting parallel
-    if (diff > PARALLEL_EPSILON && !getting_parallel) {
+    // if the difference between the sensor values is too large
+    if (diff > PARALLEL_EPSILON) {
         // if the first sensor is larger, rotate to make the sensor1 smaller
         if (sensor1 > sensor2) {
-            return -SPEED_CHANGE;
+            return SPEED_CHANGE;
         }
         // if the second sensor is larger, rotate to make sensor2 smaller
         else {
-            return SPEED_CHANGE;
+            return -SPEED_CHANGE;
         }
-        getting_parallel = true;
-    }
-    // if the difference between the sensor values is too large and the robot is getting parallel
-    else if (diff > PARALLEL_EPSILON && getting_parallel) {
-        // keep doing what its doing
-        getting_parallel = true;
+        
     }
     else {
         // stop rotating
         return 0;
-        getting_parallel = false;
+        
     }
 }
 
@@ -283,24 +275,63 @@ int8_t get_parallel(int side) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void move_in_direction(int direction, uint8_t speed, int8_t adjustment, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
+void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int veer_direction) //adjustment is for getParallel, which would calculate how much adjustment is needed
 {
-    //assuming pins are 1,2,3,4.  these will be changed later.  AnalogWrite takes (pin number, speed (0 - 255))
-
-    if(veer_direction >= 0)
-    {
-        
-        set_speeds((int8_t)(speed + ((8 - direction + 2) % 8 == veer_direction) ? SPEED_CHANGE : -SPEED_CHANGE));
-    }
-
-    if(direction == UP) //"forward"
+    if(direction == FORWARDS) //"forward"
     {
         frontL->run(BACKWARD);
         frontR->run(FORWARD);
         rearL ->run(BACKWARD);
         rearR ->run(FORWARD);
 
-        set_speeds((int8_t)(speed + adjustment));
+        if (veer_direction >= 0) {
+            if (veer_direction == (8 - direction + 2) % 8) {
+                // increase forward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else if (veer_direction == (8 - direction - 2) % 8) {
+                // increase backward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("veering");
+        }
+        else {
+            if (rotate_parallel > 0) {
+                // increase backward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else if (rotate_parallel < 0) {
+                // increase forawrd speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            } 
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("parallel");
+        }
     }
 
     else if(direction == RIGHT) //"right"
@@ -310,7 +341,54 @@ void move_in_direction(int direction, uint8_t speed, int8_t adjustment, int veer
         rearL ->run(FORWARD);
         rearR ->run(FORWARD);
 
-        set_speeds((int8_t)(speed + adjustment));
+         if (veer_direction >= 0) {
+            if (veer_direction == (8 - direction + 2) % 8) {
+                // increase foward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else if (veer_direction == (8 - direction - 2) % 8) {
+                // increase backward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("veering");
+        }
+        else {
+            if (rotate_parallel > 0) {
+                // increase backward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else if (rotate_parallel < 0) {
+                // increase forawrd speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            } 
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("parallel");
+        }
     }
 
     else if(direction == LEFT) //left
@@ -320,27 +398,113 @@ void move_in_direction(int direction, uint8_t speed, int8_t adjustment, int veer
         rearL ->run(BACKWARD);
         rearR ->run(BACKWARD);
 
-        set_speeds((int8_t)(speed + adjustment));
+        if (veer_direction >= 0) {
+            if (veer_direction == (8 - direction + 2) % 8) {
+                // increase foward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else if (veer_direction == (8 - direction - 2) % 8) {
+                // increase backward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("veering");
+        }
+        else {
+            if (rotate_parallel > 0) {
+                // increase backward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else if (rotate_parallel < 0) {
+                // increase forawrd speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            } 
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("parallel");
+        }
     }
 
-    else if(direction == DOWN) //backwards
+    else if(direction == BACKWARDS) //backwards
     {
         frontL->run(FORWARD);
         frontR->run(BACKWARD);
         rearL ->run(FORWARD);
         rearR ->run(BACKWARD);
 
-        set_speeds((int8_t)(speed + adjustment));
+        if (veer_direction >= 0) {
+            if (veer_direction == (8 - direction + 2) % 8) {
+                // increase foward speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            }
+            else if (veer_direction == (8 - direction - 2) % 8) {
+                // increase backward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("veering");
+        }
+        else {
+            if (rotate_parallel > 0) {
+                // increase backward speed
+                frontL->setSpeed(speed - SPEED_CHANGE);
+                frontR->setSpeed(speed + SPEED_CHANGE);
+                rearL ->setSpeed(speed - SPEED_CHANGE);
+                rearR ->setSpeed(speed + SPEED_CHANGE);
+            }
+            else if (rotate_parallel < 0) {
+                // increase forawrd speed
+                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed - SPEED_CHANGE);
+                rearL ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed - SPEED_CHANGE);
+            } 
+            else {
+                // go at speed
+                frontL->setSpeed(speed);
+                frontR->setSpeed(speed);
+                rearL ->setSpeed(speed);
+                rearR ->setSpeed(speed);
+            }
+            Serial.println("parallel");
+        }
     }
                
-}
-
-void set_speeds(uint8_t speed) {
-    frontL->setSpeed(speed);
-    frontR->setSpeed(speed);
-    rearL->setSpeed(speed);
-    rearR->setSpeed(speed);
-    delay(10);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]
@@ -365,7 +529,8 @@ int veer_away_from_wall(int direction)
 
     for(int i = 0; i < 8; i+=2)
     {
-        if(too_close_distance > (sensor_values[i] + sensor_values[i + 1])/2.0)
+        float smaller_value = (sensor_values[i] < sensor_values[i + 1]) ? sensor_values[i] : sensor_values[i + 1];
+        if(smaller_value < too_close_distance)
             veer_direction = i;
     }
 
@@ -489,8 +654,6 @@ void setup() {
     if(success){
         lTimeLast = lTime;
     }
-    get_direction(direction);
-    Serial.println(direction);
 }
 
 void loop() {
@@ -513,6 +676,10 @@ void loop() {
             lTimeLast = lTime;
         }
 
+        for (int i = 0; i < 8; i++) {
+            Serial.println(sensor_values[i]);
+        }
+
         // find the absolute value of the difference between the two sensor values in the direction the robot is moving
         float difference = fabs(sensor_values[direction + 1] - sensor_values[direction]);
         
@@ -528,7 +695,7 @@ void loop() {
             }
         }
         // if the average value of the two sensors in the direction the robpot is moving is less than 4", check for the new direction
-        else if ((sensor_values[direction] + sensor_values[direction + 1]) / 2 < WALL_EPSILON) { // edit to account for angled wall and maybe ramp
+        else if ((sensor_values[direction] + sensor_values[direction + 1]) / 2.0 < WALL_EPSILON) { // edit to account for angled wall and maybe ramp
             // set the current direction
             get_direction(direction);
         }
