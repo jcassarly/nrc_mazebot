@@ -37,12 +37,12 @@ void set_all_wheel_speeds(uint8_t speed);
 #define PARALLEL_EPSILON 0.08 // value that is the difference between the sensor values is greater than this, the robot is not parallel
 #define ANGLED_EPSILON 19.44 //19.44 value might be too high // value that if the difference between the sensor values is greater than this, an angled wall is here
 
-#define DEFAULT_SPEED 191 // 150
-#define SPEED_CHANGE 64 // 50
-#define VEER_SPEED_CHANGE 40
+#define DEFAULT_SPEED 150 // 150 -> max = 191
+#define SPEED_CHANGE 40 // 50 -> max = 64
+#define VEER_SPEED_CHANGE 50 // 50
 
 #define WALL_EPSILON 12.7//10.25 // 4 inches
-#define VEER_EPSILON 5
+#define VEER_EPSILON 7
 #define GET_PARALLEL_TO_WALL 30 // distance to start getting parallel to wall at
 #define RAMP_BACK 30
 #define RAMP_FRONT 25
@@ -52,14 +52,16 @@ void set_all_wheel_speeds(uint8_t speed);
 #define DIST_BETWEEN_SENSORS 17.78 // 7"
 
 #define BIT_CONVERSION 0.0002156 // convert uint_8 * t to cm
-#define TURN_2_DISTANCE 34.5 // was 33.75
+#define TURN_2_DISTANCE 33.5 // was 33.75
 
 #define DONE_EPSILON 16
 
-#define RAMP 1 // 13
-#define BEFORE_RAMP 0
+#define RAMP 13 // 13
+#define BEFORE_RAMP 12 // 12
 #define SLOW 17
-#define SECOND_ANGLE 4 //16
+#define SECOND_ANGLE 16 //16
+
+#define PRINT_STATE true
 
 // the current direction the robot is moving 
 int direction = FORWARDS; // this should be set in the direction facing the wall on the opposite side that we are going
@@ -82,6 +84,8 @@ int which_ramp = 0;
 float default_angle = 0;
 
 int turns = 0;
+bool last = false;
+bool first = true;
 
 #define LED_1 24
 #define LED_2 26
@@ -291,13 +295,13 @@ int8_t get_parallel(int side) {
     float diff = fabs(sensor2 - sensor1);
 
     // if the robot is on a ramp, look at a wall to the side
-    if (turns == RAMP) {
+    /*if (turns == RAMP) {
         sensor1 = sensor_values[(side + 6) % 8];
         sensor2 = sensor_values[(side + 6) % 8];
         diff = fabs(sensor2 - sensor1);
     }
     // if the wall in the current direction is angled, switch to the wall behind
-    else if (diff * ANGLE_FACTOR > ANGLED_EPSILON) {
+    else*/ if (diff * ANGLE_FACTOR > ANGLED_EPSILON) {
         sensor1 = sensor_values[(side + 4) % 8];
         sensor2 = sensor_values[(side + 4) % 8];
         diff = fabs(sensor2 - sensor1);
@@ -344,7 +348,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
 
         if (veer_direction < 0) {
             if (rotate_parallel > 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase backward speed
                 frontL->setSpeed(speed + SPEED_CHANGE);
                 frontR->setSpeed(speed - SPEED_CHANGE);
@@ -352,7 +356,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed - SPEED_CHANGE);
             }
             else if (rotate_parallel < 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase forawrd speed
                 frontL->setSpeed(speed - SPEED_CHANGE);
                 frontR->setSpeed(speed + SPEED_CHANGE);
@@ -360,7 +364,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed + SPEED_CHANGE);
             } 
             else {
-                //printLCD("STRAIGHT");
+                printLCD_state("STRAIGHT");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -371,23 +375,23 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
         else {
             if (veer_direction == (direction + 2) % 8) {
 
-                //printLCD("Veering from right");
+                printLCD_state("Veering from right");
                 // increase forward speed
                 frontL->setSpeed(speed);
-                frontR->setSpeed(speed + SPEED_CHANGE);
-                rearL ->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
+                rearL ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 rearR ->setSpeed(speed);
             }
             else if (veer_direction == (direction + 6) % 8) {
-                //printLCD("Veering from left");
+                printLCD_state("Veering from left");
                 // increase backward speed
-                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontL->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 frontR->setSpeed(speed);
                 rearL ->setSpeed(speed);
-                rearR ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
             }
             else {
-                //printLCD("Weird mode");
+                printLCD_state("Weird mode");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -407,7 +411,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
 
         if (veer_direction < 0) {
             if (rotate_parallel > 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase backward speed
                 frontL->setSpeed(speed + SPEED_CHANGE);
                 frontR->setSpeed(speed + SPEED_CHANGE);
@@ -415,7 +419,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed - SPEED_CHANGE);
             }
             else if (rotate_parallel < 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase forawrd speed
                 frontL->setSpeed(speed - SPEED_CHANGE);
                 frontR->setSpeed(speed - SPEED_CHANGE);
@@ -423,7 +427,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed + SPEED_CHANGE);
             } 
             else {
-                //printLCD("STRAIGHT");
+                printLCD_state("STRAIGHT");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -434,23 +438,23 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
         else {
             //printLCD("VEERING");
             if (veer_direction == (direction + 2) % 8) {
-                //printLCD("Veering from right");
+                printLCD_state("Veering from right");
                 // increase foward speed
-                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontL->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 frontR->setSpeed(speed);
                 rearL ->setSpeed(speed);
-                rearR ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
             }
             else if (veer_direction == (direction + 6) % 8) {
-                //printLCD("Veering from left");
+                printLCD_state("Veering from left");
                 // increase backward speed
                 frontL->setSpeed(speed);
-                frontR->setSpeed(speed + SPEED_CHANGE);
-                rearL ->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
+                rearL ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 rearR ->setSpeed(speed);
             }
             else {
-                //printLCD("Weird mode");
+                printLCD_state("Weird mode");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -471,7 +475,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
 
         if (veer_direction < 0) {
             if (rotate_parallel > 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase backward speed
                 frontL->setSpeed(speed - SPEED_CHANGE);
                 frontR->setSpeed(speed - SPEED_CHANGE);
@@ -479,7 +483,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed + SPEED_CHANGE);
             }
             else if (rotate_parallel < 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase forawrd speed
                 frontL->setSpeed(speed + SPEED_CHANGE);
                 frontR->setSpeed(speed + SPEED_CHANGE);
@@ -487,7 +491,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed - SPEED_CHANGE);
             } 
             else {
-                //printLCD("STRAIGHT");
+                printLCD_state("STRAIGHT");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -498,23 +502,23 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
         else {
             //printLCD("VEERING");
             if (veer_direction == (direction + 2) % 8) {
-                //printLCD("Veering from right");
+                printLCD_state("Veering from right");
                 // increase foward speed
-                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontL->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 frontR->setSpeed(speed);
                 rearL ->setSpeed(speed);
-                rearR ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
             }
             else if (veer_direction == (direction + 6) % 8) {
-                //printLCD("Veering from left");
+                printLCD_state("Veering from left");
                 // increase backward speed
                 frontL->setSpeed(speed);
-                frontR->setSpeed(speed + SPEED_CHANGE);
-                rearL ->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
+                rearL ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 rearR ->setSpeed(speed);
             }
             else {
-                //printLCD("Weird mode");
+                printLCD_state("Weird mode");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -535,7 +539,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
 
         if (veer_direction < 0) {
             if (rotate_parallel > 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase backward speed
                 frontL->setSpeed(speed - SPEED_CHANGE);
                 frontR->setSpeed(speed + SPEED_CHANGE);
@@ -543,7 +547,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
                 rearR ->setSpeed(speed + SPEED_CHANGE);
             }
             else if (rotate_parallel < 0) {
-                //printLCD("PARALLEL");
+                printLCD_state("PARALLEL");
                 // increase forawrd speed
                 frontL->setSpeed(speed + SPEED_CHANGE);
                 frontR->setSpeed(speed - SPEED_CHANGE);
@@ -552,7 +556,7 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
             } 
             else {
 
-                //printLCD("STRAIGHT");
+                printLCD_state("STRAIGHT");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -563,23 +567,23 @@ void move_in_direction(int direction, uint8_t speed, int8_t rotate_parallel, int
         else {
             //printLCD("VEERING");
             if (veer_direction == (direction + 2) % 8) {
-                //printLCD("Veering from right");
+                printLCD_state("Veering from right");
                 // increase foward speed
                 frontL->setSpeed(speed);
-                frontR->setSpeed(speed + SPEED_CHANGE);
-                rearL ->setSpeed(speed + SPEED_CHANGE);
+                frontR->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
+                rearL ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 rearR ->setSpeed(speed);
             }
             else if (veer_direction == (direction + 6) % 8) {
-                //printLCD("Veering from left");
+                printLCD_state("Veering from left");
                 // increase backward speed
-                frontL->setSpeed(speed + SPEED_CHANGE);
+                frontL->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
                 frontR->setSpeed(speed);
                 rearL ->setSpeed(speed);
-                rearR ->setSpeed(speed + SPEED_CHANGE);
+                rearR ->setSpeed(speed + VEER_SPEED_CHANGE + ((turns == RAMP) ? -20 : 0));
             }
             else {
-                //printLCD("Weird mode");
+                printLCD_state("Weird mode");
                 // go at speed
                 frontL->setSpeed(speed);
                 frontR->setSpeed(speed);
@@ -622,6 +626,42 @@ int veer_away_from_wall(int direction)
     return veer_direction;
 }
 
+void drive_ramp(int veer) {
+    frontL->run(BACKWARD);
+    frontR->run(BACKWARD);
+    rearL ->run(FORWARD);
+    rearR ->run(FORWARD);
+  
+    if (last) {
+        frontL->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
+        frontR->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
+        rearL ->setSpeed(0);
+        rearR ->setSpeed(0);
+        delay((veer == (direction + 2) % 8) ? 400 : 400);
+        
+    }
+    else {
+        frontL->setSpeed(0);
+        frontR->setSpeed(0);
+        rearL ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
+        rearR ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
+        int dly = 400;
+        if (first) {
+            dly = 200;
+        }
+        else if (veer == (direction + 6) % 8) {
+            dly = 400;
+        }
+        delay(dly);
+    }
+
+    frontL->run(RELEASE);
+    frontR->run(RELEASE);
+    rearL ->run(RELEASE);
+    rearR ->run(RELEASE);
+    delay(500);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -656,7 +696,21 @@ void printLCD(const char* msg) {
     lcd.print(msg);
 }
 
+void printLCD_state(const char* msg) {
+    if (PRINT_STATE) {
+        lcd.clear();
+        lcd.setCursor(0,0);
+        lcd.print(msg);
+    }
+}
+
 void printLCD(float msg) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(msg);
+}
+
+void printLCD(int msg) {
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print(msg);
@@ -754,12 +808,7 @@ void setup() {
 
     /* initialize some stuff */
 
-    lTime = millis();
-    lDeltaT = lTime - lTimeLast;
-    bool success = get_distance(lDeltaT);
-    if(success){
-        lTimeLast = lTime;
-    }
+    updateSensors();
 
     //LCD SETUP
     pinMode(LCD_RW,OUTPUT);
@@ -777,13 +826,8 @@ void setup() {
 }
 
 void loop() {
-    /*printLCD((float) read_accelerometer());
-    delay(3000);
-    printLCD("turn me scrub");
-    delay(3000);
-    printLCD((float) read_accelerometer());
-    delay(10000);*/
-    /*printLCD("Manual - 1");
+    // Manual mode at the start before the first turn 
+    printLCD("Manual - 1");
     updateSensors();
     get_direction(direction);
     float dist = (sensor_values[direction] + sensor_values[direction + 1]) / 2.0;
@@ -797,6 +841,8 @@ void loop() {
         delay(10);
     }
     delay(10);
+
+    // Manual mode at the start between the first and second turns
     printLCD("Manual - 2");
     get_direction(direction);
     move_in_direction(direction, DEFAULT_SPEED, ((sensor_values[direction] + sensor_values[direction + 1]) / 2.0 < GET_PARALLEL_TO_WALL) ? get_parallel(direction) : 0, veer_away_from_wall(direction));
@@ -808,7 +854,7 @@ void loop() {
 
         dist = (sensor_values[(direction + 4) % 8] + sensor_values[((direction + 4) % 8) + 1]) / 2.0;
         
-        move_in_direction(direction, DEFAULT_SPEED, ((sensor_values[direction] + sensor_values[direction + 1]) / 2.0 < GET_PARALLEL_TO_WALL) ? get_parallel(direction) : 0, veer_away_from_wall(direction));
+        move_in_direction(direction, DEFAULT_SPEED - 50, ((sensor_values[direction] + sensor_values[direction + 1]) / 2.0 < GET_PARALLEL_TO_WALL) ? get_parallel(direction) : 0, veer_away_from_wall(direction));
 
         //delay(10);
         updateSensors();
@@ -816,58 +862,62 @@ void loop() {
     }
     direction = BACKWARDS;
     move_in_direction(direction, DEFAULT_SPEED, ((sensor_values[direction] + sensor_values[direction + 1]) / 2.0 < GET_PARALLEL_TO_WALL) ? get_parallel(direction) : 0, veer_away_from_wall(direction));
-*/
-    // as long as the robot is not done going through the maze
+
+    // Autonomous mode for the rest of the turns
     while (direction != DONE) {
-        
-        /*float diff = read_accelerometer();
-        if (fabs(diff) > RAMP_EPSILON) {
-            which_ramp = (diff > 0) ? 1 : 2;
-            printLCD(diff);
-            direction = DONE;
-            break;
-        }
-        else {
-            which_ramp = 0;
-        }*/
 
         updateSensors();
 
         float avg_dist = (sensor_values[direction] + sensor_values[direction + 1]) / 2.0;
         
-        // if the robot is looking at an angled wall
+        // if the robot is close enough to turn  from a wall and its not at the second angled wall
         if (avg_dist < WALL_EPSILON && turns != SECOND_ANGLE) { // edit to account for angled wall and maybe ramp
-            LED_1_OFF
-            // set the current direction
             get_direction(direction);
             turns++;
         }
+        // if the robot it close enough to the wall to turn and its at the turn with the second angled wall
         else if (avg_dist < WALL_EPSILON && turns == SECOND_ANGLE) {
-            //printLCD("HARDCODE");
-            //delay(10000);
             direction = RIGHT;
             turns++;
         }
-        printLCD((float) turns);
+        //printLCD((float) turns);
 
-        uint8_t speed = DEFAULT_SPEED;
+        uint8_t s = DEFAULT_SPEED;
+        int8_t parallel = 0;
 
         float avg_dist_back = (sensor_values[(direction + 4) % 8] + sensor_values[((direction + 4) % 8) + 1]) / 2.0;
 
-        // move in that direction
+        // determine the speed at which the robot should move
         if (turns == RAMP && avg_dist_back < RAMP_BACK && avg_dist > RAMP_FRONT) {
-            speed = DEFAULT_SPEED - 50;
+            s = DEFAULT_SPEED - 50;
         }
         else if (turns == RAMP && avg_dist_back > RAMP_BACK && avg_dist > RAMP_FRONT) {
-            speed = DEFAULT_SPEED + 50;
+            s = DEFAULT_SPEED + 75;
         }
         else if (turns == BEFORE_RAMP) {
-            speed = DEFAULT_SPEED - 50;
+            s = DEFAULT_SPEED - 50;
         }
         else if (turns == SLOW) {
-            speed = DEFAULT_SPEED;// - 50;
+            s = DEFAULT_SPEED;// - 50;
         }
-        move_in_direction(direction, speed, (avg_dist < GET_PARALLEL_TO_WALL) ? get_parallel(direction) : 0, (avg_dist < GET_PARALLEL_TO_WALL) ? -1 : veer_away_from_wall(direction));
+
+        // determine the wall, if any, the robot should get parallel to
+        if (avg_dist < GET_PARALLEL_TO_WALL) {
+            parallel = get_parallel(direction);
+        }
+        else if (turns == RAMP) {
+            parallel = get_parallel(FORWARDS);
+        }
+
+        // move in determined direction with speed s and get_parellel value parallel
+        /*if (turns == RAMP && avg_dist_back < RAMP_BACK && avg_dist > RAMP_FRONT) {
+            drive_ramp(veer_away_from_wall(direction));
+            last = !last;
+            first = false;
+        }
+        else {*/
+            move_in_direction(direction, s, parallel, (avg_dist < GET_PARALLEL_TO_WALL) ? -1 : veer_away_from_wall(direction));
+        //}
 
         delay(10);
     }
