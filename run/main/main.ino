@@ -38,14 +38,15 @@ void set_all_wheel_speeds(uint8_t speed);
 #define ANGLED_EPSILON 19.44 //19.44 value might be too high // value that if the difference between the sensor values is greater than this, an angled wall is here
 
 #define DEFAULT_SPEED 150 // 150 -> max = 191
-#define SPEED_CHANGE 40 // 50 -> max = 64
+#define SPEED_CHANGE 30 // 50 -> max = 64
 #define VEER_SPEED_CHANGE 50 // 50
 
 #define WALL_EPSILON 12.7//10.25 // 4 inches
 #define VEER_EPSILON 7
 #define GET_PARALLEL_TO_WALL 30 // distance to start getting parallel to wall at
-#define RAMP_BACK 30
+#define RAMP_BACK 40
 #define RAMP_FRONT 25
+#define RAMP_SIDE 17.78//right
 
 #define DIST_SENSOR_TO_EDGE 4.3 // distance from the sensor to where the edge of the robot would be it it was a square
 #define ANGLE_FACTOR 1.2247 // sin(15) + cos(15) (angles in degrees)
@@ -61,7 +62,7 @@ void set_all_wheel_speeds(uint8_t speed);
 #define SLOW 17
 #define SECOND_ANGLE 16 //16
 
-#define PRINT_STATE true
+#define PRINT_STATE false
 
 // the current direction the robot is moving 
 int direction = FORWARDS; // this should be set in the direction facing the wall on the opposite side that we are going
@@ -633,24 +634,30 @@ void drive_ramp(int veer) {
     rearR ->run(FORWARD);
   
     if (last) {
-        frontL->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
-        frontR->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
+        frontL->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
+        frontR->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
         rearL ->setSpeed(0);
         rearR ->setSpeed(0);
-        delay((veer == (direction + 2) % 8) ? 400 : 400);
+        /*while (fabs(sensor_values[(direction + 6) % 8] - sensor_values[((direction + 6) % 8) + 1]) > PARALLEL_EPSILON) {
+            updateSensors();
+        }*/
+        delay((veer == (direction + 6) % 8) ? 100 : 100);
         
     }
     else {
         frontL->setSpeed(0);
         frontR->setSpeed(0);
-        rearL ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
-        rearR ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 6) % 8) ? 50 : 0));
-        int dly = 400;
+        rearL ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
+        rearR ->setSpeed(DEFAULT_SPEED + ((veer == (direction + 2) % 8) ? 50 : 0));
+        /*while (fabs(sensor_values[(direction + 2) % 8] - sensor_values[((direction + 2) % 8) + 1]) > PARALLEL_EPSILON) {
+            updateSensors();
+        }*/
+        int dly = 100;
         if (first) {
-            dly = 200;
+            dly = 50;
         }
-        else if (veer == (direction + 6) % 8) {
-            dly = 400;
+        else if (veer == (direction + 2) % 8) {
+            dly = 100;
         }
         delay(dly);
     }
@@ -871,7 +878,7 @@ void loop() {
         float avg_dist = (sensor_values[direction] + sensor_values[direction + 1]) / 2.0;
         
         // if the robot is close enough to turn  from a wall and its not at the second angled wall
-        if (avg_dist < WALL_EPSILON && turns != SECOND_ANGLE) { // edit to account for angled wall and maybe ramp
+        if (avg_dist < WALL_EPSILON + ((turns == BEFORE_RAMP) ? 2.54 : 0) && turns != SECOND_ANGLE) { // edit to account for angled wall and maybe ramp
             get_direction(direction);
             turns++;
         }
@@ -885,13 +892,14 @@ void loop() {
         uint8_t s = DEFAULT_SPEED;
         int8_t parallel = 0;
 
+        float avg_dist_right = (sensor_values[(direction + 2) % 8] + sensor_values[((direction + 2) % 8) + 1]) / 2.0;
         float avg_dist_back = (sensor_values[(direction + 4) % 8] + sensor_values[((direction + 4) % 8) + 1]) / 2.0;
 
         // determine the speed at which the robot should move
         if (turns == RAMP && avg_dist_back < RAMP_BACK && avg_dist > RAMP_FRONT) {
             s = DEFAULT_SPEED - 50;
         }
-        else if (turns == RAMP && avg_dist_back > RAMP_BACK && avg_dist > RAMP_FRONT) {
+        else if (turns == RAMP && avg_dist_back < RAMP_SIDE && avg_dist > RAMP_FRONT) {
             s = DEFAULT_SPEED + 75;
         }
         else if (turns == BEFORE_RAMP) {
@@ -905,12 +913,10 @@ void loop() {
         if (avg_dist < GET_PARALLEL_TO_WALL) {
             parallel = get_parallel(direction);
         }
-        else if (turns == RAMP) {
-            parallel = get_parallel(FORWARDS);
-        }
 
+        printLCD(avg_dist_right);
         // move in determined direction with speed s and get_parellel value parallel
-        /*if (turns == RAMP && avg_dist_back < RAMP_BACK && avg_dist > RAMP_FRONT) {
+        /*if (turns == RAMP && avg_dist_right < RAMP_SIDE && avg_dist > RAMP_FRONT) {
             drive_ramp(veer_away_from_wall(direction));
             last = !last;
             first = false;
